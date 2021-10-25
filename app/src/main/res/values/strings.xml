@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Thatch Demo</string>
+    <string name="action_search">Search</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="movie_list_fragment_label">Movies</string>
+    <string name="movie_detail_fragment_label">Details</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="search_hint">Movie name</string>
+</resources>

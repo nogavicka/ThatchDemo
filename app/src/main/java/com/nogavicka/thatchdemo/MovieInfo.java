@@ -17,10 +17,13 @@ public class MovieInfo {
   public String genre;
   public String plot;
   public String poster;
+  public String imdbId;
 
-  public MovieInfo(String title, String year, String genre, String plot, String poster) {
+  public MovieInfo(
+          String title, String year, String imdbId, String genre, String plot, String poster) {
     this.title = title;
     this.year = year;
+    this.imdbId = imdbId;
     this.genre = genre;
     this.plot = plot;
     this.poster = poster;
@@ -39,6 +42,7 @@ public class MovieInfo {
         movieInfoList.add(new MovieInfo(
                 searchResult.optString("Title"),
                 searchResult.optString("Year"),
+                searchResult.optString("imdbID"),
                 searchResult.optString("Genre"),
                 searchResult.optString("Plot"),
                 searchResult.optString("Poster")));
@@ -47,5 +51,25 @@ public class MovieInfo {
       Log.e(TAG, "Error parsing response: " + e);
     }
     return movieInfoList;
+  }
+
+  /**
+   * Parses results that are returned in JSON.
+   */
+  public static MovieInfo parseMovieInfoDetailsFromJson(String jsonString) {
+    Log.d(TAG, "jsonString: " + jsonString);
+    try {
+      JSONObject searchResult =new JSONObject(jsonString);
+      return new MovieInfo(
+              searchResult.optString("Title"),
+              searchResult.optString("Year"),
+              searchResult.optString("imdbID"),
+              searchResult.optString("Genre"),
+              searchResult.optString("Plot"),
+              searchResult.optString("Poster"));
+    } catch (JSONException e) {
+      Log.e(TAG, "Error parsing response: " + e);
+    }
+    return null;
   }
 }

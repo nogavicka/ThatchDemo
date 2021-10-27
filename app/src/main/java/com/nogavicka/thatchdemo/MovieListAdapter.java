@@ -1,17 +1,21 @@
 package com.nogavicka.thatchdemo;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.android.volley.toolbox.NetworkImageView;
 import com.nogavicka.thatchdemo.network.ImageRequester;
+import com.nogavicka.thatchdemo.network.MovieInfoRequester;
 
 import java.util.List;
 
@@ -19,12 +23,10 @@ import java.util.List;
 public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.MoviePosterViewHolder> {
     private static final String TAG = "MovieListAdapter";
 
-    private static final String MOVIE_TITLE = "movie_title";
-    private static final String MOVIE_YEAR = "movie_year";
-    private static final String MOVIE_POSTER = "movie_poster";
-
     private final ImageRequester imageRequester;
-    private List<MovieInfo> movieInfoList;
+    private final MovieInfoRequester movieInfoRequester;
+    private final List<MovieInfo> movieInfoList;
+    private final MovieListViewModel movieListViewModel;
 
     /**
      * Provide a reference to the type of views that you are using (custom ViewHolder)
@@ -47,9 +49,11 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.Movi
      *
      * @param movieInfoList containing the data to populate views to be used by RecyclerView.
      */
-    public MovieListAdapter(List<MovieInfo> movieInfoList) {
+    public MovieListAdapter(FragmentActivity fragment, List<MovieInfo> movieInfoList) {
         this.movieInfoList = movieInfoList;
+        movieListViewModel = ViewModelProviders.of(fragment).get(MovieListViewModel.class);
         imageRequester = ImageRequester.getInstance();
+        movieInfoRequester = MovieInfoRequester.getInstance(fragment);
     }
 
     @NonNull
@@ -70,12 +74,12 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.Movi
             imageRequester.setImageFromUrl(viewHolder.posterImage, movieInfo.poster);
 
             viewHolder.itemView.setOnClickListener(v -> {
-                Bundle bundle = new Bundle();
-                bundle.putString(MOVIE_TITLE, movieInfo.title);
-                bundle.putString(MOVIE_YEAR, movieInfo.year);
-                bundle.putString(MOVIE_POSTER, movieInfo.poster);
+                if (movieInfoRequester != null) {
+                    movieInfoRequester.requestMovieDetail(movieInfo.imdbId);
+                }
+                movieListViewModel.setSelected(movieInfo);
                 Navigation.findNavController(v).navigate(
-                        R.id.action_FirstFragment_to_SecondFragment, bundle);
+                        R.id.action_FirstFragment_to_SecondFragment);
             });
         }
     }
@@ -83,11 +87,5 @@ public class MovieListAdapter extends RecyclerView.Adapter<MovieListAdapter.Movi
     @Override
     public int getItemCount() {
         return movieInfoList.size();
-    }
-
-    /** Updates the list that the recycler view shows. */
-    public void setMovieList(List<MovieInfo> movieInfoList) {
-        this.movieInfoList = movieInfoList;
-        notifyDataSetChanged();
     }
 }

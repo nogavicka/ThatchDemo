@@ -10,26 +10,26 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.nogavicka.thatchdemo.databinding.FragmentMovieListBinding;
 import com.nogavicka.thatchdemo.network.MovieInfoRequester;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Fragment that displays list of movies. It contains a search. Once user searches for a string,
  * list of movies that correspond to that string from OMDB are listed in this fragment.
  */
-public class MovieListFragment extends Fragment implements
-        MovieInfoRequester.MovieInfoRequesterListener {
+public class MovieListFragment extends Fragment {
 
     private FragmentMovieListBinding binding;
     private RecyclerView recyclerView;
     private MovieListAdapter movieListAdapter;
     private MovieInfoRequester movieInfoRequester;
-    private List<MovieInfo> movieInfoList = new ArrayList<>();
+    private MovieListViewModel movieListViewModel;
 
     @Override
     public View onCreateView(
@@ -37,8 +37,10 @@ public class MovieListFragment extends Fragment implements
             Bundle savedInstanceState) {
 
         binding = FragmentMovieListBinding.inflate(inflater, container, false);
-        movieInfoRequester = MovieInfoRequester.getInstance(this);
+        movieInfoRequester = MovieInfoRequester.getInstance(getActivity());
         setHasOptionsMenu(true);
+        movieListViewModel = ViewModelProviders.of(getActivity()).get(MovieListViewModel.class);
+
         return binding.getRoot();
     }
 
@@ -47,8 +49,14 @@ public class MovieListFragment extends Fragment implements
 
         recyclerView = (RecyclerView) view.findViewById(R.id.recycler_view);
 
-        movieListAdapter = new MovieListAdapter(movieInfoList);
-        recyclerView.setAdapter(movieListAdapter);
+        Observer<List<MovieInfo>> movieListUpdateObserver =
+                movieInfoList -> {
+                    movieListAdapter = new MovieListAdapter(getActivity(), movieInfoList);
+                    recyclerView.setAdapter(movieListAdapter);
+                };
+
+        movieListViewModel.getMovieInfoLiveData().observe(getActivity(),
+                movieListUpdateObserver);
     }
 
     @Override
@@ -76,25 +84,10 @@ public class MovieListFragment extends Fragment implements
         binding = null;
     }
 
-    @Override
-    public void onStop () {
-        super.onStop();
-        if (movieInfoRequester != null) {
-            movieInfoRequester.cancelQueue();
-        }
-    }
-
-    @Override
-    public void populateMovieList(List<MovieInfo> movieInfoList) {
-        this.movieInfoList = movieInfoList;
-        movieListAdapter.setMovieList(movieInfoList);
-    }
-
     /** Search for query in movie requester. */
     private void search(String query) {
         if (movieInfoRequester != null) {
             movieInfoRequester.requestMovieInfo(query);
         }
     }
-
 }
